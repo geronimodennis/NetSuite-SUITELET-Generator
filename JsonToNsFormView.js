@@ -6,7 +6,9 @@ define([], function() {
         OPTIONS_IS_REQUIRED: 'options is required',
         DEPENDENCIES_IS_REQUIRED: 'dependencies is required',
         MISSING_FORM: 'missing form',
-        MISSING_FORMMODEL: 'missing form model'
+        MISSING_FORMMODEL: 'missing form model',
+        GET_SUBLIST_IS_REQUIRED: 'form.getSublist is required when useExisting is true',
+        SUBLIST_ID_IS_REQUIRED: 'sublist id is required when useExisting is true'
     };
     var hasOwnProperty = Object.prototype.hasOwnProperty;
 
@@ -251,17 +253,35 @@ define([], function() {
                     return;
                 }
 
-                var sublist = this.form.addSublist({
-                    id: sublistInfo.id,
-                    type: sublistInfo.type,
-                    tab: sublistInfo.tab,
-                    label: sublistInfo.label
-                });
+                var sublist = this._getOrAddSublist(sublistInfo);
 
                 this._addSublistButton(sublist, sublistInfo.buttons);
                 this._addSublistField(sublist, sublistInfo.fields);
                 this._populateItems(sublist, sublistInfo.items);
             }, this);
+        }
+
+        _getOrAddSublist(sublistInfo) {
+            if (sublistInfo.useExisting || sublistInfo.existing) {
+                if (!sublistInfo.id) {
+                    throw new Error(INTERNAL_ERROR.SUBLIST_ID_IS_REQUIRED);
+                }
+
+                if (!this.form.getSublist) {
+                    throw new Error(INTERNAL_ERROR.GET_SUBLIST_IS_REQUIRED);
+                }
+
+                return this.form.getSublist({
+                    id: sublistInfo.id
+                });
+            }
+
+            return this.form.addSublist({
+                id: sublistInfo.id,
+                type: sublistInfo.type,
+                tab: sublistInfo.tab,
+                label: sublistInfo.label
+            });
         }
 
         _addSublistField(sublist, sublistFieldInfo) {

@@ -78,6 +78,8 @@ interface SublistInfo {
     type?: string;
     tab?: string;
     label?: string;
+    useExisting?: boolean;
+    existing?: boolean;
     buttons?: Collection<ButtonInfo>;
     fields?: Collection<FieldInfo>;
     items?: Collection<SublistRow>;
@@ -98,6 +100,7 @@ interface NsForm {
     addButton(options: ButtonOptions): unknown;
     addSubmitButton(options: SubmitButtonOptions): unknown;
     addSublist(options: SublistOptions): NsSublist;
+    getSublist?(options: {id?: string}): NsSublist;
 }
 
 interface NsField {
@@ -164,7 +167,9 @@ const INTERNAL_ERROR = {
     OPTIONS_IS_REQUIRED: 'options is required',
     DEPENDENCIES_IS_REQUIRED: 'dependencies is required',
     MISSING_FORM: 'missing form',
-    MISSING_FORMMODEL: 'missing form model'
+    MISSING_FORMMODEL: 'missing form model',
+    GET_SUBLIST_IS_REQUIRED: 'form.getSublist is required when useExisting is true',
+    SUBLIST_ID_IS_REQUIRED: 'sublist id is required when useExisting is true'
 };
 const hasOwnProperty = Object.prototype.hasOwnProperty;
 
@@ -419,16 +424,34 @@ class View {
                 return;
             }
 
-            const sublist = form.addSublist({
-                id: sublistInfo.id,
-                type: sublistInfo.type,
-                tab: sublistInfo.tab,
-                label: sublistInfo.label
-            });
+            const sublist = this.getOrAddSublist(form, sublistInfo);
 
             this.addSublistButton(sublist, sublistInfo.buttons);
             this.addSublistField(sublist, sublistInfo.fields);
             this.populateItems(sublist, sublistInfo.items);
+        });
+    }
+
+    private getOrAddSublist(form: NsForm, sublistInfo: SublistInfo): NsSublist {
+        if (sublistInfo.useExisting || sublistInfo.existing) {
+            if (!sublistInfo.id) {
+                throw new Error(INTERNAL_ERROR.SUBLIST_ID_IS_REQUIRED);
+            }
+
+            if (!form.getSublist) {
+                throw new Error(INTERNAL_ERROR.GET_SUBLIST_IS_REQUIRED);
+            }
+
+            return form.getSublist({
+                id: sublistInfo.id
+            });
+        }
+
+        return form.addSublist({
+            id: sublistInfo.id,
+            type: sublistInfo.type,
+            tab: sublistInfo.tab,
+            label: sublistInfo.label
         });
     }
 

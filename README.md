@@ -1,6 +1,8 @@
 # NetSuite JSON To Form View
 
-`JsonToNsFormView` builds a NetSuite Suitelet form from a JSON view model.
+`JsonToNsFormView` builds or extends a NetSuite `serverWidget` form from a JSON view model.
+
+Use it for new Suitelet forms and for existing native NetSuite forms passed to User Event `beforeLoad` scripts, such as transaction, entity, item, and other record forms.
 
 Most examples below are JavaScript object literals because NetSuite field and sublist types usually come from `N/ui/serverWidget` enums. If you load strict JSON from a file or request body, convert string type names to the matching NetSuite enum values before calling `render()`.
 
@@ -9,16 +11,14 @@ The project includes two versions:
 - `JsonToNsFormView.js` - SuiteScript 2.1 AMD module that returns a `View` class.
 - `JsonToNsFormView.ts` - TypeScript source version with local structural types.
 
-No `SEQL_Constant` dependency is required.
-
 ## Advantages
 
-Use this library when you want Suitelet form creation to be more declarative, reusable, and easier to maintain.
+Use this library when you want NetSuite form customization to be more declarative, reusable, and easier to maintain.
 
-- Less repetitive Suitelet code: define fields, buttons, tabs, subtabs, field groups, and sublists in one view model instead of writing repeated `serverWidget` calls.
+- Less repetitive `serverWidget` code: define fields, buttons, tabs, subtabs, field groups, and sublists in one view model instead of writing repeated API calls.
 - Cleaner separation of form structure and business logic: keep request handling, searches, validation, and response logic outside the form layout definition.
-- Reusable form renderer: use the same class across many Suitelets and change only the JSON view model.
-- Common NetSuite UI support: render form titles, client scripts, tabs, subtabs, fields, field groups, select options, buttons, sublists, sublist buttons, and sublist rows.
+- Reusable form renderer: use the same class across Suitelets and User Event `beforeLoad` customizations, changing only the JSON view model.
+- Common NetSuite UI support: render form titles, client scripts, tabs, subtabs, fields, field groups, select options, buttons, sublists, sublist buttons, sublist rows, and fields or default values on existing sublists.
 - Safer value handling: valid falsy values like `0` and `false` are preserved when setting field defaults and sublist row values.
 - Optional sections are safe: provide only the sections you need, such as only `fields`, only `sublists`, or only `buttons`.
 - JavaScript and TypeScript versions: use the SuiteScript AMD file directly or use the TypeScript source for stronger typing and maintainability.
@@ -72,6 +72,52 @@ define(['N/ui/serverWidget', './JsonToNsFormView'], function(serverWidget, JsonT
     };
 });
 ```
+
+## Existing NetSuite Forms
+
+You can also use the same renderer against an existing NetSuite form, usually from a User Event `beforeLoad` script. Pass `context.form` as the dependency, then add custom buttons, fields, tabs, subtabs, sublists, or sublist changes through the view model.
+
+```javascript
+/**
+ * @NApiVersion 2.1
+ * @NScriptType UserEventScript
+ */
+define(['N/ui/serverWidget', './JsonToNsFormView'], function(serverWidget, JsonToNsFormView) {
+    function beforeLoad(context) {
+        var viewModel = {
+            clientScriptModulePath: './CS_TransactionForm.js',
+            fields: {
+                reviewNote: {
+                    id: 'custpage_review_note',
+                    label: 'Review Note',
+                    type: serverWidget.FieldType.INLINEHTML,
+                    value: '<div>Please review this transaction before approval.</div>'
+                }
+            },
+            buttons: {
+                approve: {
+                    id: 'custpage_approve',
+                    label: 'Approve',
+                    functionName: 'approveTransaction'
+                }
+            }
+        };
+
+        new JsonToNsFormView({
+            dependencies: {
+                form: context.form
+            },
+            viewModel: viewModel
+        }).render();
+    }
+
+    return {
+        beforeLoad: beforeLoad
+    };
+});
+```
+
+For native NetSuite forms, the available operations still depend on what NetSuite allows for that record, event type, and sublist. For example, transaction and entity forms commonly support adding custom buttons and fields in `beforeLoad`; native sublist changes depend on the specific sublist and context.
 
 ## Root JSON Shape
 
@@ -360,6 +406,8 @@ Supported button properties:
 
 Use either `sublist` or `sublists`. They behave the same.
 
+By default, each entry creates a new sublist with `form.addSublist`.
+
 ```javascript
 {
     sublist: {
@@ -393,6 +441,32 @@ Use either `sublist` or `sublists`. They behave the same.
     }
 }
 ```
+
+To work with an existing native sublist, set `useExisting: true`. The renderer will call `form.getSublist({id: ...})`, then apply any configured sublist fields, buttons, and row values where NetSuite permits them.
+
+```javascript
+{
+    sublists: {
+        item: {
+            id: 'item',
+            useExisting: true,
+            fields: {
+                availableQty: {
+                    id: 'custpage_available_qty',
+                    label: 'Available Qty',
+                    type: serverWidget.FieldType.FLOAT
+                }
+            },
+            items: [
+                {custpage_available_qty: 10},
+                {custpage_available_qty: 0}
+            ]
+        }
+    }
+}
+```
+
+`existing: true` is also supported as an alias for `useExisting: true`.
 
 Sublist inside a tab:
 
@@ -465,6 +539,8 @@ Supported sublist properties:
 | `type` | NetSuite sublist type, usually `serverWidget.SublistType.*`. |
 | `tab` | Optional tab id. |
 | `label` | Sublist label. |
+| `useExisting` | When `true`, uses `form.getSublist` instead of `form.addSublist`. |
+| `existing` | Alias for `useExisting`. |
 | `buttons` | Sublist-level buttons. |
 | `fields` | Sublist fields. |
 | `items` | Rows to populate. Object keys must match sublist field ids. |
@@ -712,5 +788,6 @@ If your project already has a TypeScript build, add the file to that build and c
 - Use NetSuite enum values from `N/ui/serverWidget` for `type`, `displayType`, `layoutType`, and `breakType`.
 - Use `custpage_` ids for custom Suitelet fields, tabs, buttons, and sublists.
 - Create tabs, subtabs, and field groups before fields or sublists that reference them.
+- For existing native sublists, set `useExisting: true`; `type`, `tab`, and `label` are only needed when creating a new sublist.
 - Empty strings are not written to sublist rows. Values `0` and `false` are written.
 - `clientScriptModulePath` and `clientScriptFileId` should not both be used; when both exist, module path wins.
