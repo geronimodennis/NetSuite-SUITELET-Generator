@@ -172,6 +172,8 @@ If `title` is present, it replaces the title from `serverWidget.createForm`.
 
 ## Client Script
 
+Client script configuration is optional. Use it only when the form needs client-side functions, such as button handlers.
+
 Use either `clientScriptModulePath` or `clientScriptFileId`.
 
 ```javascript
@@ -187,6 +189,8 @@ Use either `clientScriptModulePath` or `clientScriptFileId`.
 ```
 
 If both are provided, `clientScriptModulePath` wins.
+
+If neither is provided, the renderer leaves the form client script unchanged.
 
 ## Tabs
 
