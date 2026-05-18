@@ -1,13 +1,13 @@
 # NetSuite JSON To Form View
 
-`JJsonToNsFormView` builds a NetSuite Suitelet form from a JSON view model.
+`JsonToNsFormView` builds a NetSuite Suitelet form from a JSON view model.
 
 Most examples below are JavaScript object literals because NetSuite field and sublist types usually come from `N/ui/serverWidget` enums. If you load strict JSON from a file or request body, convert string type names to the matching NetSuite enum values before calling `render()`.
 
 The project includes two versions:
 
-- `JJsonToNsFormView.js` - SuiteScript 2.1 AMD module that returns a `View` class.
-- `JJsonToNsFormView.ts` - TypeScript source version with local structural types.
+- `JsonToNsFormView.js` - SuiteScript 2.1 AMD module that returns a `View` class.
+- `JsonToNsFormView.ts` - TypeScript source version with local structural types.
 
 No `SEQL_Constant` dependency is required.
 
@@ -20,7 +20,7 @@ Use the view inside a Suitelet after creating a NetSuite `serverWidget.Form`.
  * @NApiVersion 2.1
  * @NScriptType Suitelet
  */
-define(['N/ui/serverWidget', './JJsonToNsFormView'], function(serverWidget, JsonToNsFormView) {
+define(['N/ui/serverWidget', './JsonToNsFormView'], function(serverWidget, JsonToNsFormView) {
     function onRequest(context) {
         var form = serverWidget.createForm({
             title: 'Temporary Title'
@@ -689,7 +689,7 @@ define([], function() {
 Strict type-check example:
 
 ```powershell
-npx.cmd --yes -p typescript tsc --noEmit --target ES2020 --module amd --strict --ignoreDeprecations 6.0 .\JJsonToNsFormView.ts
+npx.cmd --yes -p typescript tsc --noEmit --target ES2020 --module amd --strict --ignoreDeprecations 6.0 .\JsonToNsFormView.ts
 ```
 
 If your project already has a TypeScript build, add the file to that build and compile it using the module format expected by your SuiteScript upload/deploy process.
