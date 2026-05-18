@@ -11,6 +11,19 @@ The project includes two versions:
 
 No `SEQL_Constant` dependency is required.
 
+## Advantages
+
+Use this library when you want Suitelet form creation to be more declarative, reusable, and easier to maintain.
+
+- Less repetitive Suitelet code: define fields, buttons, tabs, subtabs, field groups, and sublists in one view model instead of writing repeated `serverWidget` calls.
+- Cleaner separation of form structure and business logic: keep request handling, searches, validation, and response logic outside the form layout definition.
+- Reusable form renderer: use the same class across many Suitelets and change only the JSON view model.
+- Common NetSuite UI support: render form titles, client scripts, tabs, subtabs, fields, field groups, select options, buttons, sublists, sublist buttons, and sublist rows.
+- Safer value handling: valid falsy values like `0` and `false` are preserved when setting field defaults and sublist row values.
+- Optional sections are safe: provide only the sections you need, such as only `fields`, only `sublists`, or only `buttons`.
+- JavaScript and TypeScript versions: use the SuiteScript AMD file directly or use the TypeScript source for stronger typing and maintainability.
+- Easier dynamic forms: build the view model from configuration, saved search results, roles, subsidiaries, preferences, or request parameters.
+
 ## Basic Usage
 
 Use the view inside a Suitelet after creating a NetSuite `serverWidget.Form`.
